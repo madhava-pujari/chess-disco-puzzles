@@ -1,0 +1,5 @@
+chess
+pillow
+cairosvg
+pandas
+reportlab
