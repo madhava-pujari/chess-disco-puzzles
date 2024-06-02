@@ -11,16 +11,17 @@ from bs4 import BeautifulSoup
 
 def fen_to_png(fen, output_file, piece_set_path):
     custom_colors = {
-        "square light": "#ffffe0",  # very light yellow
-        "square dark": "#32cd32",   # dark lime green
-        "margin": "#ffffff00",      # make the margin transparent
-        "coord": "#ffffff00",       # make the coordinates transparent
-        "inner border": "#ffffff00",# make the inner border transparent
-        "outer border": "#ffffff00" # make the outer border transparent
+        'square light': '#e6e6fa',  # Light violet
+        'square dark': '#9f8fb4',
+        'margin': '#ffffff',        # White margin
+        'coord': '#000000',         # Black coordinates
+        'inner border': '#ffffff',  # White inner border
+        'outer border': '#ffffff'   # Dark violet
     }
-
+    
     board = chess.Board(fen)
-    svg_image = chess.svg.board(board=board, colors=custom_colors, borders=True)
+  
+    svg_image = chess.svg.board(board=board, colors=custom_colors, borders=True,orientation=board.turn, )
 
     # Parse the SVG using BeautifulSoup
     soup = BeautifulSoup(svg_image, 'xml')
@@ -50,17 +51,20 @@ def fen_to_png(fen, output_file, piece_set_path):
 
     cairosvg.svg2png(bytestring=modified_svg.encode('utf-8'), write_to=output_file)
 
-def create_pdf_with_images(fen_strings, output_pdf):
+def create_pdf_with_images(fen_strings, output_pdf,week_no=0):
     c = canvas.Canvas(output_pdf, pagesize=letter)
 
     c.setFillColorRGB(0.9, 0.9, 0.9)  # Light green-grey color
-    c.roundRect(40, 625, 537, 115, 10, fill=True, stroke=False)
-    c.setFont("Helvetica-Bold", 60)  # Set font to Helvetica Bold and size 60
+    c.roundRect(40, 625, 537, 140, 10, fill=True, stroke=False)
+    c.setFont("Times-Bold", 75)  # Set font to Helvetica Bold and size 60
     c.setFillColorRGB(0.2, 0.2, 0.2)  # Dark grey color for title
-    c.drawString(130, 660, "Puzzles")
+    c.drawString(60, 680, "Puzzles")
+    week_heading=f"#{week_no*10:03}"
+    c.setFont("Helvetica", 23)  # Set font to Helvetica Bold and size 60
+    c.drawString(60, 650,week_heading )
 
     logo_path = "logo4.jpg"  # Path to your logo image
-    c.drawImage(logo_path, 400, 630, width=110, height=110)
+    c.drawImage(logo_path, 440, 630, width=120, height=120)
 
     # Add images to the PDF
     row_count = 0
@@ -93,6 +97,7 @@ def create_pdf_with_images(fen_strings, output_pdf):
 if __name__ == "__main__":
     df = pd.read_csv("fen_strings.csv")
     fen_strings = df['FEN'].tolist()
+    # week_no=int(input("intial week number: "))
     for i in range(0, len(fen_strings) // 4):
         output_pdf = f"chess_puzzles_{i + 1}.pdf"
-        create_pdf_with_images(fen_strings[i * 4:(i + 1) * 4], output_pdf)
+        create_pdf_with_images(fen_strings[i * 4:(i + 1) * 4], output_pdf,week_no=0)
