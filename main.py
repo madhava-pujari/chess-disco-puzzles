@@ -64,7 +64,7 @@ def create_pdf_with_images(fen_strings, output_pdf,week_no=0):
     c.drawString(60, 650,week_heading )
 
     logo_path = "logo4.jpg"  # Path to your logo image
-    c.drawImage(logo_path, 440, 630, width=120, height=120)
+    c.drawImage(logo_path, 400, 625, width=170, height=140)
 
     # Add images to the PDF
     row_count = 0
@@ -97,7 +97,7 @@ def create_pdf_with_images(fen_strings, output_pdf,week_no=0):
 if __name__ == "__main__":
     df = pd.read_csv("fen_strings.csv")
     fen_strings = df['FEN'].tolist()
-    # week_no=int(input("intial week number: "))
+    week_no=int(input("intial week number: "))
     for i in range(0, len(fen_strings) // 4):
         output_pdf = f"chess_puzzles_{i + 1}.pdf"
         create_pdf_with_images(fen_strings[i * 4:(i + 1) * 4], output_pdf,week_no=0)

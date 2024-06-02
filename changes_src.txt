@@ -1,0 +1,2 @@
+coordinate on two sides alone :
+ svg.py->board method-> coordinates if  condition , commentout the  required lines to make cordinates appear only on two sides
