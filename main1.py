@@ -9,16 +9,31 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.colors import Color
 
 def fen_to_png(fen, output_file):
+    custom_colors = {
+        'square light': '#e6e6fa',  # Light violet
+        'square dark': '#9f8fb4',
+        'margin': '#ffffff',        # White margin
+        'coord': '#000000',         # Black coordinates
+        'inner border': '#ffffff',  # White inner border
+        'outer border': '#ffffff'   # Dark violet
+    }
+    
     board = chess.Board(fen)
-    svg_image = chess.svg.board(board=board)
+  
+    svg_image = chess.svg.board(board=board, colors=custom_colors, borders=True,orientation=board.turn, )
     cairosvg.svg2png(bytestring=svg_image.encode('utf-8'), write_to=output_file)
 
 def create_pdf_with_images(fen_strings, output_pdf):
     c = canvas.Canvas(output_pdf, pagesize=letter)
+    varu="maddhuuu"
+    c.drawString( 50, 750 , "Name: ___________________________")
+    c.drawString( 50, 720 , "Date: ____________________________")
+    c.drawString( 50, 690 , "Topic: Forks and Double attacks")
+    c.drawString( 50, 660 , f"Code: {varu}")
 
 
     logo_path = "logo5.jpg"  # Path to your logo image
-    c.drawImage(logo_path, 255, 50, width=100, height=100)
+    c.drawImage(logo_path, 390, 604, width=180, height=180)
 
     # c.setFillColorRGB(0.9, 0.9, 0.9)
 
@@ -34,21 +49,21 @@ def create_pdf_with_images(fen_strings, output_pdf):
         fen_to_png(fen, output_file)
         if idx % 3 == 0:
             row_count += 1
-        x_position = 48 + (idx % 3) * 175
-        y_position = 800 - (row_count) * 200
+        x_position = 30 + (idx % 3) * 190
+        y_position = 660 - (row_count) * 200
         
-        c.drawImage(output_file, x_position, y_position, width=150, height=150)
+        c.drawImage(output_file, x_position, y_position, width=170, height=170)
         
         # Add text under the image
         if chess.Board(fen).turn == chess.WHITE:
             text = "White to move"
         else:
             text = "Black to move"
-        c.setFont("Helvetica-Bold", 14)  # Set font to Helvetica Bold and size 17
+        c.setFont("Helvetica", 14)  # Set font to Helvetica Bold and size 17
         c.setFillColorRGB(0.2, 0.2, 0.2)  # Dark grey color
         text_width = c.stringWidth(text)
-        text_x = x_position + 50 - text_width / 3  # Center text horizontally
-        text_y = y_position - 26  # Position text below the image
+        text_x = x_position + 60 - text_width / 3  # Center text horizontally
+        text_y = y_position - 15  # Position text below the image
         c.drawString(text_x, text_y, f"{idx+1}) {text}")  # Include numbering
         print(text_x,text_y)
         os.remove(output_file)  # Remove the temporary PNG file

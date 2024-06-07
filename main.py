@@ -73,7 +73,7 @@ def create_pdf_with_images(fen_strings, output_pdf,week_no=0):
         fen_to_png(fen, output_file, piece_set_path="images/kosal")
         if idx % 2 == 0:
             row_count += 1
-        x_position = 45 + (idx % 2) * 275
+        x_position = 35 + (idx % 2) * 275
         y_position = 650 - (row_count) * 300
         c.drawImage(output_file, x_position, y_position, width=250, height=250)
         
@@ -82,10 +82,10 @@ def create_pdf_with_images(fen_strings, output_pdf,week_no=0):
             text = "White to move"
         else:
             text = "Black to move"
-        c.setFont("Helvetica-Bold", 17)  # Set font to Helvetica Bold and size 17
+        c.setFont("Helvetica", 17)  # Set font to Helvetica Bold and size 17
         c.setFillColorRGB(0.2, 0.2, 0.2)  # Dark grey color
         text_width = c.stringWidth(text)
-        text_x = x_position + 125 - text_width / 2  # Center text horizontally
+        text_x = x_position + 115 - text_width / 2  # Center text horizontally
         text_y = y_position - 26  # Position text below the image
         c.drawString(text_x, text_y, f"{idx+1}) {text}")  # Include numbering
         
@@ -99,5 +99,5 @@ if __name__ == "__main__":
     fen_strings = df['FEN'].tolist()
     week_no=int(input("intial week number: "))
     for i in range(0, len(fen_strings) // 4):
-        output_pdf = f"chess_puzzles_{i + 1}.pdf"
-        create_pdf_with_images(fen_strings[i * 4:(i + 1) * 4], output_pdf,week_no=0)
+        output_pdf = f"Puzzle_#{week_no*10:03}.pdf"
+        create_pdf_with_images(fen_strings[i * 4:(i + 1) * 4], output_pdf,week_no)
