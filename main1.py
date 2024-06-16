@@ -7,6 +7,13 @@ import pandas as pd
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib.colors import Color
+import csv
+
+def sheet_code_gen(topic,num: int):
+    first_letters = ''.join(word[0].upper() for word in topic.split())
+    three_digit_number = str(num).zfill(3)
+    return first_letters+ three_digit_number
+    
 
 def fen_to_png(fen, output_file):
     custom_colors = {
@@ -23,12 +30,14 @@ def fen_to_png(fen, output_file):
     svg_image = chess.svg.board(board=board, colors=custom_colors, borders=True,orientation=board.turn, )
     cairosvg.svg2png(bytestring=svg_image.encode('utf-8'), write_to=output_file)
 
-def create_pdf_with_images(fen_strings, output_pdf):
+def create_pdf_with_images(fen_strings, output_pdf,i):
     c = canvas.Canvas(output_pdf, pagesize=letter)
-    varu="maddhuuu"
+    topic="Mate In Two"
+    varu=sheet_code_gen(topic,i+1)
+    
     c.drawString( 50, 750 , "Name: ___________________________")
     c.drawString( 50, 720 , "Date: ____________________________")
-    c.drawString( 50, 690 , "Topic: Forks and Double attacks")
+    c.drawString( 50, 690 , f"Topic: {topic}")
     c.drawString( 50, 660 , f"Code: {varu}")
 
 
@@ -73,10 +82,11 @@ def create_pdf_with_images(fen_strings, output_pdf):
 
 # Example usage:
 if __name__ == "__main__":
-    df = pd.read_csv("fen_strings_daily.csv")
+    df = pd.read_csv("lichess_study_fens.csv")
+    first_column_name = next(csv.reader(open('lichess_study_fens.csv')))[0]
     fen_strings = df['FEN'].tolist()
     print(len(fen_strings))
     for i in range(0,len(fen_strings)//9):
         output_pdf = f"chess_puzzles_daily_{i+1}.pdf"
-        create_pdf_with_images(fen_strings[i*9:(i+1)*9], output_pdf)
+        create_pdf_with_images(fen_strings[i*9:(i+1)*9], output_pdf,i)
 

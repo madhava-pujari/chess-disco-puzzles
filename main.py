@@ -99,5 +99,7 @@ if __name__ == "__main__":
     fen_strings = df['FEN'].tolist()
     week_no=int(input("intial week number: "))
     for i in range(0, len(fen_strings) // 4):
+        
         output_pdf = f"Puzzle_#{week_no*10:03}.pdf"
         create_pdf_with_images(fen_strings[i * 4:(i + 1) * 4], output_pdf,week_no)
+        week_no+=1
