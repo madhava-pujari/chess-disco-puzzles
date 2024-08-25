@@ -2,11 +2,10 @@ import requests
 import csv
 
 
-url = "https://lichess.org/study/r1sPtVdy/rVoFJZxl"
-
+url = "https://lichess.org/study/WW5CwKN5/bvOnLiUy"
+name = "skewers"
 headers = {
     "accept": "application/web.lichess+json",
-    "referer": "https://lichess.org/study/wpCNEljM/gZ0s0Bml",
 }
 
 response = requests.get(url, headers=headers)
@@ -20,13 +19,10 @@ if response.status_code == 200:
         if "fen" in chapter:
             fens.append(chapter["fen"])
 
-    # Write the FEN strings to a CSV file
-    csv_filename = "lichess_study_fens.csv"
+    csv_filename = f"lichess_study_fens_{name}.csv"
     with open(csv_filename, mode="w", newline="") as file:
         writer = csv.writer(file)
-        # Write the header
-        writer.writerow([study_name])
-        # Write each FEN string in a new row
+        writer.writerow(["FEN"])
         for fens in fens:
             writer.writerow([fens])
 

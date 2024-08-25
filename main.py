@@ -9,47 +9,25 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.colors import Color
 from bs4 import BeautifulSoup
 
-def fen_to_png(fen, output_file, piece_set_path):
+def fen_to_png(fen, output_file):
     custom_colors = {
         'square light': '#e6e6fa',  # Light violet
         'square dark': '#9f8fb4',
-        'margin': '#ffffff',        # White margin
-        'coord': '#000000',         # Black coordinates
+        'margin': '#ffffff',  # White margin
+        'coord': '#000000',  # Black coordinates
         'inner border': '#ffffff',  # White inner border
-        'outer border': '#ffffff'   # Dark violet
+        'outer border': '#ffffff',  # Dark violet
     }
-    
+
     board = chess.Board(fen)
-  
-    svg_image = chess.svg.board(board=board, colors=custom_colors, borders=True,orientation=board.turn, )
 
-    # Parse the SVG using BeautifulSoup
-    soup = BeautifulSoup(svg_image, 'xml')
-
-    piece_names = ['k', 'q', 'r', 'b', 'n', 'p']
-    colors = ['w', 'b']
-    
-    for color in colors:
-        for piece in piece_names:
-            piece_key = f"{color}{piece}"
-            custom_piece_path = os.path.join(piece_set_path, f"{piece_key}.svg")
-            with open(custom_piece_path, "r") as f:
-                custom_piece_svg = f.read()
-
-            # Find all use elements referring to this piece
-            use_elements = soup.find_all("use", {"href": f"#{piece_key}"})
-            for use_element in use_elements:
-                # Replace use element with custom SVG
-                custom_piece_soup = BeautifulSoup(custom_piece_svg, 'xml')
-                for svg_elem in custom_piece_soup.find_all('svg'):
-                    svg_elem['x'] = use_element['x']
-                    svg_elem['y'] = use_element['y']
-                    use_element.replace_with(svg_elem)
-
-    # Convert the modified SVG back to a string
-    modified_svg = str(soup)
-
-    cairosvg.svg2png(bytestring=modified_svg.encode('utf-8'), write_to=output_file)
+    svg_image = chess.svg.board(
+        board=board,
+        colors=custom_colors,
+        borders=True,
+        orientation=board.turn,
+    )
+    cairosvg.svg2png(bytestring=svg_image.encode('utf-8'), write_to=output_file)
 
 def create_pdf_with_images(fen_strings, output_pdf,week_no=0):
     c = canvas.Canvas(output_pdf, pagesize=letter)
@@ -70,7 +48,7 @@ def create_pdf_with_images(fen_strings, output_pdf,week_no=0):
     row_count = 0
     for idx, fen in enumerate(fen_strings):
         output_file = f"chess_board_{idx}.png"
-        fen_to_png(fen, output_file, piece_set_path="images/kosal")
+        fen_to_png(fen, output_file)
         if idx % 2 == 0:
             row_count += 1
         x_position = 35 + (idx % 2) * 275
