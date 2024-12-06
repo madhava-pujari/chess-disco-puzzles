@@ -2,8 +2,8 @@ import requests
 import csv
 
 
-url = "https://lichess.org/study/WW5CwKN5/bvOnLiUy"
-name = "skewers"
+url = "https://lichess.org/study/96EHlvNO"
+name = "mate_in_one"
 headers = {
     "accept": "application/web.lichess+json",
 }

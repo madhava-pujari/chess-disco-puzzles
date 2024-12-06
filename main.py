@@ -7,16 +7,17 @@ import pandas as pd
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib.colors import Color
+from reportlab.lib.colors import HexColor
 from bs4 import BeautifulSoup
 
 def fen_to_png(fen, output_file):
     custom_colors = {
-        'square light': '#e6e6fa',  # Light violet
-        'square dark': '#9f8fb4',
-        'margin': '#ffffff',  # White margin
+        'square light': '#ebecd0',  # Light violet
+        'square dark': '#739552',
+        'margin': '#F0F8FF',  # White margin
         'coord': '#000000',  # Black coordinates
-        'inner border': '#ffffff',  # White inner border
-        'outer border': '#ffffff',  # Dark violet
+        'inner border': '#F0F8FF',  # White inner border
+        'outer border': '#F0F8FF',  # Dark violet
     }
 
     board = chess.Board(fen)
@@ -31,6 +32,13 @@ def fen_to_png(fen, output_file):
 
 def create_pdf_with_images(fen_strings, output_pdf,week_no=0):
     c = canvas.Canvas(output_pdf, pagesize=letter)
+    
+    
+    width, height = letter
+    bg_color = HexColor("#F0F8FF")  # Example: AliceBlue
+
+    c.setFillColor(bg_color)
+    c.rect(0, 0, width, height, fill=1)
 
     c.setFillColorRGB(0.9, 0.9, 0.9)  # Light green-grey color
     c.roundRect(40, 625, 537, 140, 10, fill=True, stroke=False)
@@ -51,15 +59,15 @@ def create_pdf_with_images(fen_strings, output_pdf,week_no=0):
         fen_to_png(fen, output_file)
         if idx % 2 == 0:
             row_count += 1
-        x_position = 35 + (idx % 2) * 275
+        x_position = 50 + (idx % 2) * 275
         y_position = 650 - (row_count) * 300
         c.drawImage(output_file, x_position, y_position, width=250, height=250)
         
         # Add text under the image
         if chess.Board(fen).turn == chess.WHITE:
-            text = "White to move"
+            text = "White to Move"
         else:
-            text = "Black to move"
+            text = "Black to Move"
         c.setFont("Helvetica", 17)  # Set font to Helvetica Bold and size 17
         c.setFillColorRGB(0.2, 0.2, 0.2)  # Dark grey color
         text_width = c.stringWidth(text)
@@ -67,7 +75,18 @@ def create_pdf_with_images(fen_strings, output_pdf,week_no=0):
         text_y = y_position - 26  # Position text below the image
         c.drawString(text_x, text_y, f"{idx+1}) {text}")  # Include numbering
         
+        
+        
+
+        
         os.remove(output_file)  # Remove the temporary PNG file
+    c.setFont("Helvetica", 14)
+    vertical_text = "BRS Chess Academy©"
+    print(y_position)
+    x, y = 290,200   # Position for the vertical text
+    c.translate(x, y) 
+    c.rotate(270)  # Rotate the canvas by 90 degrees
+    c.drawString(0, 0, vertical_text)  # Draw the string at the rotated position
 
     c.save()
 
