@@ -18,26 +18,26 @@ level_partition ={
         "min_rating": 0,
         "max_rating": 749,
     },
-    # "level_1": {
-    #     "level": 1,
-    #     "min_rating":750,
-    #     "max_rating":1099,
-    # },
-    # "level_2": {
-    #     "level": 2,
-    #     "min_rating": 1100,
-    #     "max_rating": 1399,
-    # },
-    # "level_3": {
-    #     "level": 3,
-    #     "min_rating": 1400,
-    #     "max_rating": 1699,
-    # },
-    # "level_4": {
-    #     "level": 4,
-    #     "min_rating": 1700,
-    #     "max_rating": 2400,
-    # }
+    "level_1": {
+        "level": 1,
+        "min_rating":750,
+        "max_rating":1099,
+    },
+    "level_2": {
+        "level": 2,
+        "min_rating": 1100,
+        "max_rating": 1399,
+    },
+    "level_3": {
+        "level": 3,
+        "min_rating": 1400,
+        "max_rating": 1699,
+    },
+    "level_4": {
+        "level": 4,
+        "min_rating": 1700,
+        "max_rating": 2400,
+    }
 }
 
 def sheet_code_gen(topic:str,level:int):
@@ -278,8 +278,8 @@ if __name__ == "__main__":
     theme_data = puzzle_dict[theme_name]
 
     for index,(key,value) in enumerate(level_partition.items()):
-        layout_type = int(input("number of puzzles per sheet? "))
-        level_partition[key]['sheet_count'] =int(input('number of sheets for this level? '))
+        layout_type = int(input(f"({key})number of puzzles per sheet? "))
+        level_partition[key]['sheet_count'] =int(input(f'({key}) number of sheets for this level? '))
 
         if layout_type == 9:
             level_partition[key]['layout']=NINE_LAYOUT
