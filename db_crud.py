@@ -88,7 +88,7 @@ def get_puzzles_by_theme_and_rating(
         query = query.filter(~ChessPuzzle.PuzzleId.in_(exclude_puzzles))
 
     query = query.order_by(ChessPuzzle.NbPlays.desc())
-    if not limit:
+    if  limit:
         query = query.limit(limit)
 
     puzzles = query.all()
