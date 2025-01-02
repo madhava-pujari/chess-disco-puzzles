@@ -1,3 +1,5 @@
+import random
+
 import chess
 from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import sessionmaker
@@ -50,7 +52,8 @@ def get_puzzles_by_theme_and_rating(
     min_rating=None, 
     max_rating=None, 
     limit=None,
-    exclude_puzzles=None
+    exclude_puzzles=None,
+    nb_plays_lt =None
 ):
     """
     Retrieve chess puzzles based on themes and rating range.
@@ -86,6 +89,9 @@ def get_puzzles_by_theme_and_rating(
     
     if exclude_puzzles:
         query = query.filter(~ChessPuzzle.PuzzleId.in_(exclude_puzzles))
+    if nb_plays_lt:
+        query = query.filter(ChessPuzzle.NbPlays <= nb_plays_lt)
+
 
     query = query.order_by(ChessPuzzle.NbPlays.desc())
     if  limit:

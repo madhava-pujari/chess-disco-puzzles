@@ -13,28 +13,28 @@ NINE_LAYOUT=9
 SIX_LAYOUT=6
 FOUR_LAYOUT=4
 level_partition ={
-    "level_0": {
-        "level": 0,
+    "level_1": {
+        "level": 1,
         "min_rating": 0,
         "max_rating": 749,
     },
-    "level_1": {
-        "level": 1,
+    "level_2": {
+        "level": 2,
         "min_rating":750,
         "max_rating":1099,
     },
-    "level_2": {
-        "level": 2,
+    "level_3": {
+        "level": 3,
         "min_rating": 1100,
         "max_rating": 1399,
     },
-    "level_3": {
-        "level": 3,
+    "level_4": {
+        "level": 4,
         "min_rating": 1400,
         "max_rating": 1699,
     },
-    "level_4": {
-        "level": 4,
+    "level_5": {
+        "level": 5,
         "min_rating": 1700,
         "max_rating": 2400,
     }
@@ -69,7 +69,7 @@ def fen_to_png(fen, output_file):
     cairosvg.svg2png(bytestring=svg_image.encode('utf-8'), write_to=output_file)
 
 
-def create_puzzle_sheet(puzzle_list, topic_name,level,folder_name, sheet_code, layout_type):
+def create_puzzle_sheet(puzzle_list, topic_data,level,folder_name, sheet_code, layout_type):
     """
     Create a PDF sheet of chess puzzles with different layout options.
     layout_type: int (4, 6, or 9) - number of puzzles per sheet determining the layout
@@ -78,7 +78,7 @@ def create_puzzle_sheet(puzzle_list, topic_name,level,folder_name, sheet_code, l
         raise ValueError("layout_type must be 4, 6, or 9")
     os.makedirs(folder_name, exist_ok=True)
 
-    output_pdf = os.path.join(folder_name, f"{topic_name}_lvl{level}_code{sheet_code}.pdf")
+    output_pdf = os.path.join(folder_name, f"{topic_data["theme_name"]}_lvl{level}_code{sheet_code}.pdf")
 
     c = canvas.Canvas(output_pdf, pagesize=letter)
     width, height = letter
@@ -170,7 +170,7 @@ def create_puzzle_sheet(puzzle_list, topic_name,level,folder_name, sheet_code, l
     # Header information
     c.drawString(50, 750, "Name: ___________________________")
     c.drawString(50, 720, "Date: ____________________________")
-    c.drawString(50, 690, f"Topic: {topic_name}")
+    c.drawString(50, 690, f"Topic: {theme_data["complete_theme_name"]}")
     c.drawString(50, 660, f"Code: {sheet_code}")
 
     # Save current graphics state
@@ -296,9 +296,9 @@ if __name__ == "__main__":
         result = get_puzzles_by_theme_and_rating(themes=[theme_data["theme_name"],],min_rating=value['min_rating'],max_rating=value['max_rating'], limit=value['sheet_count']*value['layout'])
 
         master_puzzle_dict = slice_puzzle_list(master_puzzle_list=result,layout_type= value['layout'],topic= theme_data["complete_theme_name"],level= value['level'])
-        folder_name = f"{key}_{theme_data["theme_name"]}"
+        folder_name = f"{theme_data["theme_name"]}/{key}_{theme_data["theme_name"]}"
         print(master_puzzle_dict)
         for index2, (key2, value2) in enumerate(master_puzzle_dict.items()):
-            create_puzzle_sheet(puzzle_list=value2,folder_name=folder_name,sheet_code=key2,level=value['level'],layout_type=value['layout'],topic_name=theme_data["theme_name"])
+            create_puzzle_sheet(puzzle_list=value2,folder_name=folder_name,sheet_code=key2,level=value['level'],layout_type=value['layout'],topic_data=theme_data)
         create_answer_pdfs_with_header(data=master_puzzle_dict,folder_name=folder_name,topic=theme_data['theme_name'],level=value['level'])
 
