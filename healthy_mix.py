@@ -1,0 +1,387 @@
+import random
+
+import chess
+import chess.svg
+from PIL import Image
+import cairosvg
+import os
+import pandas as pd
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
+from reportlab.pdfgen import canvas
+from reportlab.lib.colors import Color
+from reportlab.lib.colors import HexColor
+from bs4 import BeautifulSoup
+
+from db_crud import get_puzzles_by_theme_and_rating
+
+
+def fen_to_png(fen, output_file):
+    custom_colors = {
+        'square light': '#ebecd0',  # Light violet
+        'square dark': '#739552',
+        'margin': '#F0F8FF',  # White margin
+        'coord': '#000000',  # Black coordinates
+        'inner border': '#F0F8FF',  # White inner border
+        'outer border': '#F0F8FF',  # Dark violet
+    }
+
+    board = chess.Board(fen)
+
+    svg_image = chess.svg.board(
+        board=board,
+        colors=custom_colors,
+        borders=True,
+        orientation=board.turn,
+    )
+    cairosvg.svg2png(bytestring=svg_image.encode('utf-8'), write_to=output_file)
+
+
+
+
+
+
+
+NINE_LAYOUT=9
+SIX_LAYOUT=6
+FOUR_LAYOUT=4
+level_partition ={
+    "level_1": {
+        "level": 1,
+        "min_rating": 0,
+        "max_rating": 899,
+    },
+    "level_2": {
+        "level": 2,
+        "min_rating":900,
+        "max_rating":1299,
+    },
+    "level_3": {
+        "level": 3,
+        "min_rating": 1300,
+        "max_rating": 1699,
+    },
+    "level_4": {
+        "level": 4,
+        "min_rating": 1700,
+        "max_rating": 2199,
+    },
+    "level_5": {
+        "level": 5,
+        "min_rating": 2200,
+        "max_rating": 2700,
+    }
+}
+
+
+
+def create_weekly_puzzle_sheet(puzzle_list, folder_name, sheet_code, ):
+
+    os.makedirs(folder_name, exist_ok=True)
+    output_pdf = os.path.join(folder_name, f"Weekly_puzzle_{sheet_code}.pdf")
+    c = canvas.Canvas(output_pdf, pagesize=letter)
+
+    width, height = letter
+    bg_color = HexColor("#F0F8FF")  # Example: AliceBlue
+
+    c.setFillColor(bg_color)
+    c.rect(0, 0, width, height, fill=1)
+
+    c.setFillColorRGB(0.9, 0.9, 0.9)  # Light green-grey color
+    c.roundRect(40, 625, 537, 140, 10, fill=True, stroke=False)
+    c.setFont("Times-Bold", 75)  # Set font to Helvetica Bold and size 60
+    c.setFillColorRGB(0.2, 0.2, 0.2)  # Dark grey color for title
+    c.drawString(60, 680, "Puzzles")
+    c.setFont("Helvetica", 23)  # Set font to Helvetica Bold and size 60
+    c.drawString(60, 650, sheet_code)
+
+    logo_path = "logo4.jpg"  # Path to your logo image
+    c.drawImage(logo_path, 400, 625, width=170, height=140)
+    # Add images to the PDF
+    row_count = 0
+    for idx, individual_puzzle in enumerate(puzzle_list):
+        output_file = f"chess_board_{idx}.png"
+        fen_to_png(individual_puzzle['FEN'], output_file)
+        if idx % 2 == 0:
+            row_count += 1
+        x_position = 50 + (idx % 2) * 275
+        y_position = 650 - (row_count) * 300
+        c.drawImage(output_file, x_position, y_position, width=250, height=250)
+
+        # Add text under the image
+        if chess.Board(individual_puzzle['FEN']).turn == chess.WHITE:
+            text = "White to Move"
+        else:
+            text = "Black to Move"
+        c.setFont("Helvetica", 17)  # Set font to Helvetica Bold and size 17
+        c.setFillColorRGB(0.2, 0.2, 0.2)  # Dark grey color
+        text_width = c.stringWidth(text)
+        text_x = x_position + 115 - text_width / 2  # Center text horizontally
+        text_y = y_position - 26  # Position text below the image
+        c.drawString(text_x, text_y, f"{idx + 1}) {text}")  # Include numbering
+
+        os.remove(output_file)  # Remove the temporary PNG file
+    c.setFont("Helvetica", 14)
+    vertical_text = "BRS Chess Academy©"
+    print(y_position)
+    x, y = 290, 200  # Position for the vertical text
+    c.translate(x, y)
+    c.rotate(270)  # Rotate the canvas by 90 degrees
+    c.drawString(0, 0, vertical_text)  # Draw the string at the rotated position
+    c.save()
+
+def create_answer_pdfs_with_header(data,folder_name, topic='healthy_mix'):
+    """Generates PDFs from a nested list of strings while ensuring each inner list stays on the same page.
+
+    Args:
+        data (list of list of str): The nested list of strings.
+        topic (str): The topic string for the header.
+        output_prefix (str): Prefix for output PDF filenames.
+    """
+
+    def draw_header(c, topic):
+        """Draws the header on the current canvas."""
+        # Get letter page dimensions
+        width, height = letter
+
+        # Background color (optional)
+        # bg_color = HexColor("#F0F8FF")
+        # c.setFillColor(bg_color)
+        # c.rect(0, 0, width, height, fill=1)
+
+        # Logo
+        logo_path = "logo5.jpg"
+        c.drawImage(logo_path, 390, 604, width=180, height=180)
+
+        # Header Text
+        c.setFont("Helvetica", 20)
+        c.drawString(50, 750, f"Solutions--")
+        c.drawString(50, 725, f"Topic: {topic}")
+
+    # Constants for positioning
+    margin = inch / 2
+    line_height = 14
+    max_lines_per_page = 40  # Adjust based on the content and page size
+
+    # Page counter for multiple PDFs
+    pdf_counter = 1
+    os.makedirs(folder_name, exist_ok=True)
+    output_pdf_name = os.path.join(folder_name, f"{topic}_solutions.pdf")
+    c = canvas.Canvas(output_pdf_name, pagesize=letter)
+    heading_height = 16
+
+    draw_header(c, topic)
+
+    # Current y-coordinate to write content
+    y = 700  # Initial y-position under the header
+    spacing = 16
+    for index,(key,value) in enumerate(data.items()):
+        # Calculate the block height
+        block_height = len(value) * line_height + heading_height + spacing
+
+        # If the block won't fit on the current page, create a new page
+        if y - block_height < margin:
+            c.showPage()
+            draw_header(c, topic)
+            y = 700  # Reset y position for the new page
+
+        # Write each line in the current block
+        c.setFont("Helvetica", 14)
+        y -= spacing
+        c.drawString(margin, y, key)
+        y-= heading_height
+        c.setFont("Helvetica", 12)
+
+        for idx,line in enumerate(value):
+            ans_str =", ".join(line["Moves"])
+            fmt_ans_str =f"{idx}:({line["PuzzleId"]}) {ans_str}"
+            c.drawString(margin, y, fmt_ans_str )
+            y -= line_height
+
+    # Save the current PDF
+    c.save()
+    print(f"PDF saved: {output_pdf_name}")
+
+
+
+level_wise_puzzle_partition = {}
+
+level_wise_puzzle_topic_partition = {
+    "level_1": ["pin", "mateIn1", "fork", "skewer", "discoveredAttack", "mateIn2",
+                 "backRankMate", "doubleCheck", "capturingDefender","hangingPiece","sacrifice","skewer"],
+    "level_2": ["capturingDefender","promotion","pin","mateIn1","fork","skewer","discoveredAttack","mateIn2","smotheredMate","backRankMate","doubleCheck","exposedKing","trappedPiece"],
+    "level_3": ["capturingDefender","promotion","pin","mateIn1","fork","skewer","discoveredAttack","mateIn2","smotheredMate","backRankMate","doubleCheck","exposedKing","trappedPiece","kingsideAttack","mateIn3"],
+    "level_4": ["capturingDefender","promotion","pin","mateIn1","fork","skewer","discoveredAttack","mateIn4","smotheredMate","backRankMate","doubleCheck","exposedKing","trappedPiece","kingsideAttack","mateIn3","deflection","attackingF2F7","mateIn4","xRayAttack","interference","defensiveMove","crushing"],
+    "level_5": ["capturingDefender","promotion","pin","mateIn1","fork","skewer","discoveredAttack","mateIn4","smotheredMate","backRankMate","doubleCheck","exposedKing","trappedPiece","kingsideAttack","mateIn3","deflection","attackingF2F7","mateIn4","xRayAttack","interference","defensiveMove","crushing"],
+}
+
+
+
+def sheet_code_gen(topic:str,level:int,format:int):
+    counter = 1
+    while True:
+        first_letters = ''.join(word[0].upper() for word in topic.split())
+        three_digit_number = str(counter).zfill(3)
+        yield '#'+ 'V1L' + str(level) + "F"+str(format)+first_letters + three_digit_number
+        counter += 1
+
+def get_mix_puzzles_list(level=None,format=None,nbsheets=None):
+    master_puzzle_list = dict()
+    puzzle_list=[]
+
+    for topic in level_wise_puzzle_topic_partition[f'level_{level}']:
+        result = get_puzzles_by_theme_and_rating(themes=[topic], min_rating=level_partition[f'level_{level}']["min_rating"],
+                                                 limit=200, max_rating=level_partition[f'level_{level}']["max_rating"],
+                                                 )
+        puzzle_list.extend(result)
+
+    sheet_code = sheet_code_gen(level=level,format=format,topic="healthy mix")
+    for i in range(nbsheets):
+        temp_list = list()
+        for idx in range(format):
+            picked_item = random.choice(puzzle_list)  # Pick a random item
+            puzzle_list.remove(picked_item)  # Remove the picked item
+            temp_list.append(picked_item)
+        master_puzzle_list[next(sheet_code)] = temp_list
+    return master_puzzle_list
+
+
+
+def create_puzzle_sheet(puzzle_list, topic_data,level,folder_name, sheet_code, layout_type):
+    """
+    Create a PDF sheet of chess puzzles with different layout options.
+    layout_type: int (4, 6, or 9) - number of puzzles per sheet determining the layout
+    """
+    if layout_type not in [4, 6, 9]:
+        raise ValueError("layout_type must be 4, 6, or 9")
+    os.makedirs(folder_name, exist_ok=True)
+
+    output_pdf = os.path.join(folder_name, f"{topic_data["theme_name"]}_lvl{level}_code{sheet_code}.pdf")
+
+    c = canvas.Canvas(output_pdf, pagesize=letter)
+    width, height = letter
+
+    # Set background
+    bg_color = HexColor("#F0F8FF")
+    c.setFillColor(bg_color)
+    c.rect(0, 0, width, height, fill=1)
+
+    # Draw logo
+    logo_path = "logo5-Photoroom.png"
+    c.drawImage(logo_path, 390, 604, width=180, height=180)
+
+    # Layout configurations
+    layout_configs = {
+        4: {
+            "rows": 2,
+            "cols": 2,
+            "x_spacing": 250,
+            "y_spacing": 250,
+            "img_size": 200,
+            "watermark_x": 252,
+            "watermark_y": 280
+        },
+        6: {
+            "rows": 2,
+            "cols": 3,
+            "x_spacing": 200,
+            "y_spacing": 270,
+            "img_size": 190,
+            "watermark_x": 198,
+            "watermark_y": 280
+        },
+        9: {
+            "rows": 3,
+            "cols": 3,
+            "x_spacing": 190,
+            "y_spacing": 190,
+            "img_size": 170,
+            "watermark_x": 195,
+            "watermark_y": 180
+        }
+    }
+
+    config = layout_configs[layout_type]
+
+    # Add images to the PDF
+    for idx, (individual_puzzle) in enumerate(puzzle_list):
+        print(idx)
+        output_file = f"chess_board_daily{idx}.png"
+        fen_to_png(individual_puzzle["FEN"], output_file)
+
+        row = idx // config["cols"]
+        col = idx % config["cols"]
+
+        # Adjust starting x position based on layout type for better centering
+        if layout_type == 4:
+            start_y = 300
+            start_x = 30
+        elif layout_type == 6:
+            start_x = 15
+            start_y = 370
+        else:
+            start_y = 420
+            start_x = 30
+
+        x_position = start_x + col * config["x_spacing"]
+        y_position = start_y - row * config["y_spacing"]
+
+        c.drawImage(output_file, x_position, y_position,
+                    width=config["img_size"],
+                    height=config["img_size"])
+
+        # Text under puzzle
+        if chess.Board(individual_puzzle["FEN"]).turn == chess.WHITE:
+            text = "White to move"
+        else:
+            text = "Black to move"
+
+        c.setFont("Helvetica", 14)
+        c.setFillColorRGB(0.2, 0.2, 0.2)
+        text_width = c.stringWidth(text)
+        text_x = x_position + (config["img_size"] / 2) - text_width / 2  # Center text horizontally
+        text_y = y_position - 15
+        c.drawString(text_x, text_y, f"{idx + 1}) {text}")
+
+        os.remove(output_file)
+
+    # Header information
+    c.drawString(50, 750, "Name: ___________________________")
+    c.drawString(50, 720, "Date: ____________________________")
+    c.drawString(50, 690, f"Topic: {theme_data["complete_theme_name"]}")
+    c.drawString(50, 660, f"Code: {sheet_code}")
+
+    # Save current graphics state
+    c.saveState()
+
+    # Watermark with position based on layout
+    c.setFont("Helvetica", 11)
+    vertical_text = "BRS Chess Academy©"
+    x, y = config["watermark_x"], config["watermark_y"]
+    c.translate(x, y)
+    c.rotate(270)
+    c.drawString(0, 0, vertical_text)
+
+    # Restore graphics state
+    c.restoreState()
+
+    c.save()
+
+if __name__ == "__main__":
+    nbsheets = int(input("nb of sheets: "))
+
+    theme_data= {'complete_theme_name': 'Healthy mix',
+         'description': "A bit of everything. You don't know what to expect, "
+                        'so you remain ready for anything! Just like in real '
+                        'games.',
+         'theme_name': 'mix'
+    }
+
+    for index,(key,value) in enumerate(level_partition.items()):
+        for format in [SIX_LAYOUT,NINE_LAYOUT]:
+            master_puzzle_dict = get_mix_puzzles_list(level=value['level'],format=format,nbsheets=nbsheets)
+            folder_name = f"Healthy_Mix/level_{value['level']}/{format}_format"
+            for index2, (key2, value2) in enumerate(master_puzzle_dict.items()):
+                create_puzzle_sheet(puzzle_list=value2,folder_name=folder_name,sheet_code=key2,level=value['level'],layout_type=format,topic_data=theme_data)
+            create_answer_pdfs_with_header(data=master_puzzle_dict,folder_name=folder_name)
+
